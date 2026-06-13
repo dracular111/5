@@ -39,7 +39,7 @@ getgenv().Config = {
     },
     ["Pet Catch Webhook"] = {
         Enabled = true,
-        Url = "https://discord.com/api/webhooks/1515430104044535828/Rzsf-cDZyPAyEwdEV6W-5L0mJ0I1gzuccKelLEI6T_6KNfTBdk3fyhAG51gEifsYNwhq",
+        Url = getgenv().WebhookUrl or "",
         Note = "Gag2",
         Mention = "@everyone Found: ",
     },
