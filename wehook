@@ -1,0 +1,78 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
+
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1515430104044535828/Rzsf-cDZyPAyEwdEV6W-5L0mJ0I1gzuccKelLEI6T_6KNfTBdk3fyhAG51gEifsYNwhq"
+
+local RarePets = {
+    ["Golden Dragonfly"] = true,
+    ["Unicorn"] = true,
+    ["Deer"] = true,
+    ["Raccoon"] = true
+}
+
+local DataService = require(
+    ReplicatedStorage.Modules.DataService
+)
+
+local Seen = {}
+
+local function SendWebhook(petName)
+    pcall(function()
+        request({
+            Url = WEBHOOK_URL,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json"
+            },
+            Body = HttpService:JSONEncode({
+                content = "@everyone",
+                embeds = {{
+                    title = "🎉 Rare Pet Found",
+                    description = petName,
+                    color = 16766720,
+                    timestamp = DateTime.now():ToIsoDate()
+                }}
+            })
+        })
+    end)
+end
+
+local function ScanPets()
+    local Data = DataService:GetData()
+
+    if not Data
+        or not Data.PetsData
+        or not Data.PetsData.PetInventory
+        or not Data.PetsData.PetInventory.Data
+    then
+        return
+    end
+
+    for uuid, petData in pairs(Data.PetsData.PetInventory.Data) do
+        if not Seen[uuid] then
+            Seen[uuid] = true
+
+            local petName = petData.PetType
+
+            if RarePets[petName] then
+                warn("[RARE PET]", petName)
+                SendWebhook(petName)
+            end
+        end
+    end
+end
+
+-- Lần đầu chỉ đánh dấu pet hiện có
+do
+    local Data = DataService:GetData()
+
+    if Data and Data.PetsData and Data.PetsData.PetInventory then
+        for uuid in pairs(Data.PetsData.PetInventory.Data) do
+            Seen[uuid] = true
+        end
+    end
+end
+
+while task.wait(2) do
+    pcall(ScanPets)
+end
