@@ -1,0 +1,38 @@
+task.wait(10)
+
+settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+
+local Lighting = game:GetService("Lighting")
+
+Lighting.GlobalShadows = false
+Lighting.FogEnd = 1000000
+Lighting.Brightness = 0
+Lighting.EnvironmentDiffuseScale = 0
+Lighting.EnvironmentSpecularScale = 0
+
+for _,v in ipairs(Lighting:GetChildren()) do
+    if v:IsA("BloomEffect")
+    or v:IsA("SunRaysEffect")
+    or v:IsA("ColorCorrectionEffect")
+    or v:IsA("DepthOfFieldEffect")
+    or v:IsA("BlurEffect")
+    or v:IsA("Atmosphere") then
+        v:Destroy()
+    end
+end
+
+for _,v in ipairs(workspace:GetDescendants()) do
+    if v:IsA("ParticleEmitter")
+    or v:IsA("Trail")
+    or v:IsA("Beam")
+    or v:IsA("Smoke")
+    or v:IsA("Fire")
+    or v:IsA("Sparkles") then
+        pcall(function() v.Enabled = false end)
+
+    elseif v:IsA("BasePart") then
+        v.Material = Enum.Material.Plastic
+        v.Reflectance = 0
+        v.CastShadow = false
+    end
+end
