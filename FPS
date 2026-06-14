@@ -24,7 +24,7 @@ getgenv().FPS_START_TIME = getgenv().FPS_START_TIME or os.time()
 local FPS_MODE = "LOCK"
 -- "AUTO" hoặc "LOCK"
 
-local LOCK_FPS = 3
+local LOCK_FPS = 4
 
 local FPS_WORLD = 3
 local FPS_EVENT = 3
