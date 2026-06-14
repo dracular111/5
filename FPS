@@ -248,7 +248,3 @@ end)
 spawn(function()
 --loadstring(game:HttpGet("https://raw.githubusercontent.com/dracular111/5/main/Cpu"))()
 end)
-
-spawn(function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/dracular111/5/main/wehook"))()
-end)
