@@ -1,4 +1,9 @@
-task.wait(10)
+spawn(function()
+task.wait(20)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/dracular111/5/main/Not-AFK"))()
+end)
+
+task.wait(15)
 getgenv().MailConfig = getgenv().MailConfig or {
     ["Auto Send Mail"] = true,
     ["Auto Claim Mail"] = true,
