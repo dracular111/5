@@ -1,0 +1,16 @@
+task.wait(10)
+getgenv().MailConfig = getgenv().MailConfig or {
+    ["Auto Send Mail"] = true,
+    ["Auto Claim Mail"] = true,
+    ["Send Loop"] = 3,
+    ["Claim Loop"] = 5,
+    -- Gửi mail: key = username người nhận
+    ["Mail To Send"] = {
+        ["chickenhpx000"] = {
+            Note = "gift",
+            Items = {
+                ["Bamboo"] = 11900,
+            },
+        },
+    },
+}
