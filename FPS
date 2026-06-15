@@ -8,7 +8,7 @@ pcall(function()
     end
 end)
 
-local FPS_CAP = 3
+local FPS_CAP = 2
 
 if setfpscap then
     pcall(setfpscap, FPS_CAP)
