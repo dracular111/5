@@ -27,7 +27,7 @@ local FPS_MODE = "AUTO"
 local LOCK_FPS = 4
 
 local FPS_WORLD = 7
-local FPS_EVENT = 4
+local FPS_EVENT = 3
 
 --================================--
 
