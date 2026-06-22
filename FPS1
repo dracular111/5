@@ -14,7 +14,6 @@ pcall(function()
     end
 end)
 task.wait(5)
-getgenv().FPS_START_TIME = getgenv().FPS_START_TIME or os.time()
 
 -- Cấu hình
 --================================--
@@ -75,74 +74,6 @@ Label.TextXAlignment = Enum.TextXAlignment.Center
 Label.TextStrokeTransparency = 0.4
 Label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 Label.Parent = ScreenGui
-
--- ✅ Online time
---local Online = Instance.new("TextLabel")
---Online.Size = UDim2.new(1, 0, 0, 120)
---Online.Position = UDim2.new(0, 0, 0.55, 0)
---Online.BackgroundTransparency = 1
---Online.TextColor3 = Color3.fromRGB(255, 255, 0)
---Online.Font = Enum.Font.Code
---Online.TextSize = 70
---Online.Text = "Online: 00:00:00"
---Online.TextXAlignment = Enum.TextXAlignment.Center
---Online.TextStrokeTransparency = 0.3
---Online.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
---Online.Parent = Label
-
--- ✅ Username (thêm mới, không ảnh hưởng code cũ)
-local Player = game:GetService("Players").LocalPlayer
-
---local Username = Instance.new("TextLabel")
---Username.Size = UDim2.new(1, 0, 0, 120)
---Username.Position = UDim2.new(0, 0, 0.70, 0) -- nằm dưới dòng Online
---Username.BackgroundTransparency = 1
---Username.TextColor3 = Color3.fromRGB(255, 255, 0)
---Username.Font = Enum.Font.Code
---Username.TextSize = 70
---Username.Text = "" .. Player.DisplayName
---Username.TextXAlignment = Enum.TextXAlignment.Center
---Username.TextStrokeTransparency = 0.3
---Username.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
---Username.Parent = Label
-
-local PlayersService = game:GetService("Players")
-
---local ServerPlayers = Instance.new("TextLabel")
---ServerPlayers.Size = UDim2.new(1, 0, 0, 120)
---ServerPlayers.Position = UDim2.new(0, 0, 0.85, 0)
---ServerPlayers.BackgroundTransparency = 1
---ServerPlayers.TextColor3 = Color3.fromRGB(255, 255, 0)
---ServerPlayers.Font = Enum.Font.Code
---ServerPlayers.TextSize = 70
---ServerPlayers.TextXAlignment = Enum.TextXAlignment.Center
---ServerPlayers.TextStrokeTransparency = 0.3
---ServerPlayers.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
---ServerPlayers.Parent = Label
-
-local otherPlayers = math.max(#PlayersService:GetPlayers() - 1, 0)
-ServerPlayers.Text = "👤 " .. tostring(otherPlayers)
-
-
-local startTime = getgenv().FPS_START_TIME
-
-task.spawn(function()
-    while task.wait(1) do
-        local elapsed = os.time() - startTime
-        local h = math.floor(elapsed / 3600)
-        local m = math.floor((elapsed % 3600) / 60)
-        local s = elapsed % 60
-        Online.Text = string.format("%02d:%02d:%02d", h, m, s)
-    end
-end)
-
-
-task.spawn(function()
-    while task.wait(60) do
-        local otherPlayers = math.max(#PlayersService:GetPlayers() - 1, 0)
-        ServerPlayers.Text = "👤 " .. tostring(otherPlayers)
-    end
-end)
 
 -- ✅ GIỮ NGUYÊN MỌI THỨ BÊN DƯỚI
 -- FPS hiển thị ngay, nhưng chỉ lock sau 1 phút 30s
