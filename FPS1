@@ -64,17 +64,17 @@ workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateS
 
 local Label = Instance.new("TextLabel")
 
-Label.Size = UDim2.new(0, 1200, 0, 400)
-Label.Position = UDim2.new(0.5, -600, 0, 20) -- ✅ Dịch UI lên cao thêm
-Label.BackgroundTransparency = 1
-Label.TextColor3 = Color3.fromRGB(255, 255, 0)
-Label.Font = Enum.Font.Code
-Label.TextSize = 60
-Label.Text = "FPS "
-Label.TextXAlignment = Enum.TextXAlignment.Center
-Label.TextStrokeTransparency = 0.4
-Label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-Label.Parent = ScreenGui
+--Label.Size = UDim2.new(0, 1200, 0, 400)
+--Label.Position = UDim2.new(0.5, -600, 0, 20) -- ✅ Dịch UI lên cao thêm
+--Label.BackgroundTransparency = 1
+--Label.TextColor3 = Color3.fromRGB(255, 255, 0)
+--Label.Font = Enum.Font.Code
+--Label.TextSize = 60
+--Label.Text = "FPS "
+--Label.TextXAlignment = Enum.TextXAlignment.Center
+--Label.TextStrokeTransparency = 0.4
+--Label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+--Label.Parent = ScreenGui
 
 -- ✅ Online time
 --local Online = Instance.new("TextLabel")
@@ -108,17 +108,17 @@ local Player = game:GetService("Players").LocalPlayer
 
 local PlayersService = game:GetService("Players")
 
-local ServerPlayers = Instance.new("TextLabel")
-ServerPlayers.Size = UDim2.new(1, 0, 0, 120)
-ServerPlayers.Position = UDim2.new(0, 0, 0.85, 0)
-ServerPlayers.BackgroundTransparency = 1
-ServerPlayers.TextColor3 = Color3.fromRGB(255, 255, 0)
-ServerPlayers.Font = Enum.Font.Code
-ServerPlayers.TextSize = 70
-ServerPlayers.TextXAlignment = Enum.TextXAlignment.Center
-ServerPlayers.TextStrokeTransparency = 0.3
-ServerPlayers.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-ServerPlayers.Parent = Label
+--local ServerPlayers = Instance.new("TextLabel")
+--ServerPlayers.Size = UDim2.new(1, 0, 0, 120)
+--ServerPlayers.Position = UDim2.new(0, 0, 0.85, 0)
+--ServerPlayers.BackgroundTransparency = 1
+--ServerPlayers.TextColor3 = Color3.fromRGB(255, 255, 0)
+--ServerPlayers.Font = Enum.Font.Code
+--ServerPlayers.TextSize = 70
+--ServerPlayers.TextXAlignment = Enum.TextXAlignment.Center
+--ServerPlayers.TextStrokeTransparency = 0.3
+--ServerPlayers.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+--ServerPlayers.Parent = Label
 
 local otherPlayers = math.max(#PlayersService:GetPlayers() - 1, 0)
 ServerPlayers.Text = "👤 " .. tostring(otherPlayers)
