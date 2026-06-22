@@ -64,7 +64,7 @@ workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateS
 local Label = Instance.new("TextLabel")
 
 Label.Size = UDim2.new(0, 1200, 0, 400)
-Label.Position = UDim2.new(0.5, -600, 0, -30) -- ✅ Dịch UI lên cao thêm
+Label.Position = UDim2.new(0.5, -600, 0, -60) -- ✅ Dịch UI lên cao thêm
 Label.BackgroundTransparency = 1
 Label.TextColor3 = Color3.fromRGB(255, 255, 0)
 Label.Font = Enum.Font.Code
