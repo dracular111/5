@@ -1,10 +1,23 @@
 repeat task.wait() until game:IsLoaded()
 
 pcall(function()
-    for _,v in pairs(game:GetService("CoreGui"):GetChildren()) do
-        if v.Name == "FPS_UI" then
-            v:Destroy()
-        end
+    -- Ngắt connection cũ
+    if getgenv().fps_loop then
+        getgenv().fps_loop:Disconnect()
+        getgenv().fps_loop = nil
+    end
+
+    -- Hủy thread cũ
+    if getgenv().fps_thread then
+        task.cancel(getgenv().fps_thread)
+        getgenv().fps_thread = nil
+    end
+
+    -- Xóa UI cũ
+    local CoreGui = game:GetService("CoreGui")
+    local Old = CoreGui:FindFirstChild("FPS_UI")
+    if Old then
+        Old:Destroy()
     end
 end)
 
@@ -36,16 +49,18 @@ Label.Parent = ScreenGui
 
 local fps = 0
 
-RunService.RenderStepped:Connect(function(dt)
-    fps = math.floor(1 / math.max(dt,0.0001))
+getgenv().fps_loop = RunService.RenderStepped:Connect(function(dt)
+    fps = math.floor(1 / math.max(dt, 0.0001))
 end)
 
-task.spawn(function()
-    while task.wait(1) do
-        Label.Text = string.format(
-            "FPS %d/%d",
-            fps,
-            FPS_CAP
-        )
+getgenv().fps_thread = task.spawn(function()
+    while true do
+        task.wait(1)
+
+        if not ScreenGui.Parent then
+            break
+        end
+
+        Label.Text = ("FPS %d/%d"):format(fps, FPS_CAP)
     end
 end)
