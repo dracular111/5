@@ -38,7 +38,7 @@ ScreenGui.Parent = CoreGui
 
 local Label = Instance.new("TextLabel")
 Label.Size = UDim2.new(0, 500, 0, 120)
-Label.Position = UDim2.new(0.5, -250, 0, 80)
+Label.Position = UDim2.new(0.5, -250, 0, -60)
 Label.BackgroundTransparency = 1
 Label.Font = Enum.Font.Code
 Label.TextSize = 50
