@@ -77,34 +77,34 @@ Label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 Label.Parent = ScreenGui
 
 -- ✅ Online time
-local Online = Instance.new("TextLabel")
-Online.Size = UDim2.new(1, 0, 0, 120)
-Online.Position = UDim2.new(0, 0, 0.55, 0)
-Online.BackgroundTransparency = 1
-Online.TextColor3 = Color3.fromRGB(255, 255, 0)
-Online.Font = Enum.Font.Code
-Online.TextSize = 70
-Online.Text = "Online: 00:00:00"
-Online.TextXAlignment = Enum.TextXAlignment.Center
-Online.TextStrokeTransparency = 0.3
-Online.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-Online.Parent = Label
+--local Online = Instance.new("TextLabel")
+--Online.Size = UDim2.new(1, 0, 0, 120)
+--Online.Position = UDim2.new(0, 0, 0.55, 0)
+--Online.BackgroundTransparency = 1
+--Online.TextColor3 = Color3.fromRGB(255, 255, 0)
+--Online.Font = Enum.Font.Code
+--Online.TextSize = 70
+--Online.Text = "Online: 00:00:00"
+--Online.TextXAlignment = Enum.TextXAlignment.Center
+--Online.TextStrokeTransparency = 0.3
+--Online.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+--Online.Parent = Label
 
 -- ✅ Username (thêm mới, không ảnh hưởng code cũ)
 local Player = game:GetService("Players").LocalPlayer
 
-local Username = Instance.new("TextLabel")
-Username.Size = UDim2.new(1, 0, 0, 120)
-Username.Position = UDim2.new(0, 0, 0.70, 0) -- nằm dưới dòng Online
-Username.BackgroundTransparency = 1
-Username.TextColor3 = Color3.fromRGB(255, 255, 0)
-Username.Font = Enum.Font.Code
-Username.TextSize = 70
-Username.Text = "" .. Player.DisplayName
-Username.TextXAlignment = Enum.TextXAlignment.Center
-Username.TextStrokeTransparency = 0.3
-Username.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-Username.Parent = Label
+--local Username = Instance.new("TextLabel")
+--Username.Size = UDim2.new(1, 0, 0, 120)
+--Username.Position = UDim2.new(0, 0, 0.70, 0) -- nằm dưới dòng Online
+--Username.BackgroundTransparency = 1
+--Username.TextColor3 = Color3.fromRGB(255, 255, 0)
+--Username.Font = Enum.Font.Code
+--Username.TextSize = 70
+--Username.Text = "" .. Player.DisplayName
+--Username.TextXAlignment = Enum.TextXAlignment.Center
+--Username.TextStrokeTransparency = 0.3
+--Username.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+--Username.Parent = Label
 
 local PlayersService = game:GetService("Players")
 
@@ -241,8 +241,4 @@ task.spawn(function()
         end
     end)
 
-end)
-
-spawn(function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/dracular111/03/main/A-UI-TimeTrial"))()
 end)
