@@ -64,17 +64,17 @@ workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateS
 
 local Label = Instance.new("TextLabel")
 
---Label.Size = UDim2.new(0, 1200, 0, 400)
---Label.Position = UDim2.new(0.5, -600, 0, 20) -- ✅ Dịch UI lên cao thêm
---Label.BackgroundTransparency = 1
---Label.TextColor3 = Color3.fromRGB(255, 255, 0)
---Label.Font = Enum.Font.Code
---Label.TextSize = 60
---Label.Text = "FPS "
---Label.TextXAlignment = Enum.TextXAlignment.Center
---Label.TextStrokeTransparency = 0.4
---Label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
---Label.Parent = ScreenGui
+Label.Size = UDim2.new(0, 1200, 0, 400)
+Label.Position = UDim2.new(0.5, -600, 0, 40) -- ✅ Dịch UI lên cao thêm
+Label.BackgroundTransparency = 1
+Label.TextColor3 = Color3.fromRGB(255, 255, 0)
+Label.Font = Enum.Font.Code
+Label.TextSize = 60
+Label.Text = "FPS "
+Label.TextXAlignment = Enum.TextXAlignment.Center
+Label.TextStrokeTransparency = 0.4
+Label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+Label.Parent = ScreenGui
 
 -- ✅ Online time
 --local Online = Instance.new("TextLabel")
