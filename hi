@@ -1,0 +1,420 @@
+getgenv().MailConfig = getgenv().MailConfig or {
+    ["Auto Send Mail"] = false,
+    ["Auto Claim Mail"] = true,
+    ["Send Loop"] = 3,
+    ["Claim Loop"] = 5,
+    ["Mail To Send"] = {
+        [""] = {
+            Note = "gift",
+            Items = {
+                "Golden Dragonfly",
+            },
+        },
+    },
+}
+
+repeat task.wait() until game:IsLoaded()
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
+
+-- Skip loading screen
+LocalPlayer:SetAttribute("LoadingScreenActive", false)
+LocalPlayer:SetAttribute("LoadingScreenDone", true)
+local char = LocalPlayer.Character
+if char then
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp then hrp.Anchored = false end
+end
+local menu = workspace:FindFirstChild("LoadingScreenMenu")
+if menu then menu:Destroy() end
+
+-- Anti AFK
+local VirtualUser = game:GetService("VirtualUser")
+LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+local Config = getgenv().MailConfig
+
+local Shared = ReplicatedStorage:WaitForChild("SharedModules")
+local Net = require(Shared:WaitForChild("Networking"))
+
+local PlayerState = require(ReplicatedStorage.ClientModules:WaitForChild("PlayerStateClient"))
+local PlayerReplica = PlayerState:WaitForLocalReplica(30)
+local PetData = require(ReplicatedStorage.SharedData:WaitForChild("PetData"))
+-- Config Send Mail
+local MAIL_MAX_PER_GIFT = 20
+local MAIL_SEND_GAP = 1.6
+local CLAIM_GAP = 0.6
+
+local isSendingMail = false
+local isClaiming = false
+
+local function normalizeMutationTag(tag)
+    if type(tag) ~= "string" or tag == "" then return nil end
+    local lower = string.lower(string.gsub(tag, "^%s*(.-)%s*$", "%1"))
+    if lower == "rainbow" then return "Rainbow" end
+    if lower == "gold" or lower == "golden" then return "Gold" end
+    return tag
+end
+
+local function normalizePetName(name)
+    return string.lower(string.gsub(name or "", "^%s*(.-)%s*$", "%1"))
+end
+
+local function getPetDisplayName(species, size)
+    if not species then return "" end
+    local ok, display = pcall(PetData.GetDisplayName, species, size)
+    if ok and type(display) == "string" then return display end
+    ok, display = pcall(PetData.GetSpeciesDisplayName, species)
+    if ok and type(display) == "string" then return display end
+    return species
+end
+
+local function matchesTargetName(species, size, targetName)
+    local targetNorm = normalizePetName(targetName)
+    local display = normalizePetName(getPetDisplayName(species, size))
+    local speciesNorm = normalizePetName(getPetDisplayName(species, nil))
+    if display == targetNorm or speciesNorm == targetNorm then return true end
+    return string.find(display, targetNorm, 1, true) ~= nil
+        or string.find(speciesNorm, targetNorm, 1, true) ~= nil
+end
+
+local function mailPetNameMatches(species, size, targetName)
+    return matchesTargetName(species, size, targetName) or species == targetName
+end
+
+local MAIL_GIFT_CATEGORIES = {
+    "Seeds", "Sprinklers", "WateringCans", "Mushrooms", "Gnomes", "Raccoons",
+    "Crates", "SeedPacks", "Trowels", "Props", "Flashbangs", "EmptyPots",
+    "Pets", "HarvestedFruits",
+}
+
+local function resolveMailSendCount(owned, amount)
+    if type(amount) == "number" and amount > 0 then
+        if owned < amount then return 0 end
+        return amount
+    end
+    return owned
+end
+
+local function parseMailItemQuery(query)
+    if type(query) ~= "string" then return query, nil end
+    local base, tag = string.match(query, "^(.-)%s*%[([^%]]+)%]$")
+    if base then
+        base = string.gsub(base, "^%s*(.-)%s*$", "%1")
+        tag = string.gsub(tag, "^%s*(.-)%s*$", "%1")
+        return base, normalizeMutationTag(tag)
+    end
+    return query, nil
+end
+
+local function mailEntryMatchesName(category, key, entry, itemName, wantMutation)
+    if category == "Pets" and type(entry) == "table" then
+        return entry.Name == itemName or mailPetNameMatches(entry.Name, entry.Size, itemName)
+    end
+    if category == "HarvestedFruits" and type(entry) == "table" then
+        local fruitName = entry.FruitName or entry.Name
+        if fruitName ~= itemName then
+            local mutation = entry.Mutation
+            if mutation and mutation ~= "" then
+                if string.format("%s [%s]", fruitName, mutation) ~= itemName then
+                    return false
+                end
+            else
+                return false
+            end
+        end
+        if wantMutation then
+            return normalizeMutationTag(entry.Mutation) == wantMutation
+        end
+        return wantMutation == nil
+    end
+    if category == "Seeds" then
+        if wantMutation then
+            return key == wantMutation or normalizeMutationTag(key) == wantMutation
+        end
+        return key == itemName
+    end
+    if key == itemName then
+        return wantMutation == nil
+    end
+    return false
+end
+
+local function getMailInventoryOwned(category, key, entry)
+    if category == "Pets" or category == "HarvestedFruits" then
+        if type(entry) ~= "table" then return 0 end
+        if entry.Id == nil then return 0 end
+        if category == "Pets" and entry.Equipped == true then return 0 end
+        return 1
+    end
+    if type(entry) == "number" and entry > 0 then return entry end
+    return 0
+end
+
+local function resolveMailItems(itemQuery, amount, forcedCategory)
+    local results = {}
+    local itemName, wantMutation = parseMailItemQuery(itemQuery)
+    if type(itemName) ~= "string" or itemName == "" then return results end
+
+    local inventory = PlayerReplica and PlayerReplica.Data and PlayerReplica.Data.Inventory
+    if type(inventory) ~= "table" then return results end
+
+    local categoriesToScan = forcedCategory and { forcedCategory } or MAIL_GIFT_CATEGORIES
+
+    for _, category in categoriesToScan do
+        local bucket = inventory[category]
+        if type(bucket) ~= "table" then continue end
+
+        if category == "Pets" then
+            for key, entry in bucket do
+                if not mailEntryMatchesName(category, key, entry, itemName, nil) then continue end
+                if getMailInventoryOwned(category, key, entry) <= 0 then continue end
+                results[#results + 1] = { Category = category, ItemKey = key, Count = 1 }
+                if type(amount) == "number" and amount > 0 and #results >= amount then
+                    return results
+                end
+            end
+            if #results > 0 or forcedCategory == "Pets" then return results end
+        elseif category == "HarvestedFruits" then
+            for key, entry in bucket do
+                if not mailEntryMatchesName(category, key, entry, itemName, wantMutation) then continue end
+                if getMailInventoryOwned(category, key, entry) <= 0 then continue end
+                results[#results + 1] = { Category = category, ItemKey = key, Count = 1 }
+                if type(amount) == "number" and amount > 0 and #results >= amount then
+                    return results
+                end
+            end
+            if #results > 0 or forcedCategory == "HarvestedFruits" then return results end
+        else
+            if category == "Seeds" and wantMutation and itemName ~= "Rainbow" and itemName ~= "Gold" then
+                continue
+            end
+            local lookupName = itemName
+            if category == "Seeds" then
+                if wantMutation then
+                    lookupName = wantMutation
+                elseif itemName == "Rainbow" or itemName == "Gold" then
+                    lookupName = itemName
+                end
+            end
+            local entry = bucket[lookupName]
+            local owned = getMailInventoryOwned(category, lookupName, entry)
+            if owned > 0 then
+                local sendCount = resolveMailSendCount(owned, amount)
+                if sendCount > 0 then
+                    results[#results + 1] = { Category = category, ItemKey = lookupName, Count = sendCount }
+                end
+                return results
+            end
+        end
+    end
+
+    return results
+end
+
+local function mergeMailBatchEntry(batch, entry)
+    for _, existing in batch do
+        if existing.Category == entry.Category and existing.ItemKey == entry.ItemKey then
+            existing.Count = (existing.Count or 1) + (entry.Count or 1)
+            return
+        end
+    end
+    batch[#batch + 1] = entry
+end
+
+local function splitMailBatch(batch, maxTotal)
+    local chunks = {}
+    local current = {}
+    local currentTotal = 0
+    for _, item in batch do
+        local remaining = item.Count or 1
+        while remaining > 0 do
+            if currentTotal >= maxTotal then
+                chunks[#chunks + 1] = current
+                current = {}
+                currentTotal = 0
+            end
+            local take = math.min(remaining, maxTotal - currentTotal)
+            current[#current + 1] = { Category = item.Category, ItemKey = item.ItemKey, Count = take }
+            currentTotal += take
+            remaining -= take
+        end
+    end
+    if #current > 0 then chunks[#chunks + 1] = current end
+    return chunks
+end
+
+local function lookupMailUserId(username)
+    if type(username) ~= "string" or username == "" then return nil end
+    username = string.gsub(username, "^%s*@?(.-)%s*$", "%1")
+    if username == "" then return nil end
+    local ok, userId = pcall(function()
+        return Net.Mailbox.LookupPlayer:Fire(username)
+    end)
+    if not ok or type(userId) ~= "number" or userId <= 0 then return nil end
+    return userId
+end
+
+local function sendMailBatch(userId, batch, note)
+    if type(userId) ~= "number" or #batch == 0 then return false, "empty batch" end
+    local ok, success, message = pcall(function()
+        return Net.Mailbox.SendBatch:Fire(userId, batch, note or "")
+    end)
+    if not ok then return false, tostring(success) end
+    if success ~= true then
+        return false, (type(message) == "string" and message ~= "" and message) or "send rejected"
+    end
+    return true, message
+end
+
+local function buildMailBatchFromItems(itemsTable, optionalCategory)
+    local batch = {}
+    if type(itemsTable) ~= "table" then return batch end
+    for key, value in itemsTable do
+        local itemKey, amount, forcedCategory
+        if type(key) == "number" and type(value) == "string" then
+            itemKey = value
+            forcedCategory = optionalCategory
+        elseif type(key) == "string" then
+            itemKey = key
+            forcedCategory = optionalCategory
+            if type(value) == "number" then
+                amount = value
+            elseif type(value) == "table" then
+                itemKey = value.Item or value.ItemKey or value.item or key
+                amount = value.Count or value.Amount or value.amount
+                forcedCategory = value.Category or value.category or optionalCategory
+                local mutation = value.Mutation or value.mutation
+                if mutation and type(itemKey) == "string" and not string.find(itemKey, "%[", 1, true) then
+                    local cat = forcedCategory or value.Category or value.category
+                    if cat ~= "Pets" then
+                        itemKey = string.format("%s [%s]", itemKey, mutation)
+                    end
+                end
+            end
+        else
+            continue
+        end
+        if type(itemKey) ~= "string" or itemKey == "" then continue end
+        local items = resolveMailItems(itemKey, amount, forcedCategory)
+        for _, item in items do
+            mergeMailBatchEntry(batch, item)
+        end
+    end
+    return batch
+end
+
+local function buildMailBatch(entry)
+    local optionalCategory = entry.Category or entry.category
+    local items = entry.Items or entry.items
+    if type(items) == "table" then
+        return buildMailBatchFromItems(items, optionalCategory)
+    end
+    local itemKey = entry.Item or entry.ItemKey or entry.item
+    if type(itemKey) ~= "string" or itemKey == "" then return {} end
+    return resolveMailItems(itemKey, entry.Count or entry.Amount or entry.amount, optionalCategory)
+end
+
+local function trySendMail()
+    if Config["Auto Send Mail"] == false then return end
+    if isSendingMail then return end
+
+    local list = Config["Mail To Send"]
+    if type(list) ~= "table" then return end
+
+    for key, entry in list do
+        if type(entry) ~= "table" then continue end
+
+        local username
+        if type(key) == "string" then
+            username = key
+        else
+            username = entry.Username or entry.username
+        end
+        if type(username) ~= "string" or username == "" then continue end
+
+        local note = entry.Note or entry.note or ""
+        local batch = buildMailBatch(entry)
+        if #batch == 0 then continue end
+
+        local userId = lookupMailUserId(username)
+        if not userId then
+            warn("[Mail] Not Found:", username)
+            continue
+        end
+
+        local chunks = splitMailBatch(batch, MAIL_MAX_PER_GIFT)
+        isSendingMail = true
+
+        task.spawn(function()
+            for i, chunk in chunks do
+                local ok, err = sendMailBatch(userId, chunk, note)
+                if ok then
+                    local totalCount = 0
+                    for _, item in chunk do totalCount += item.Count or 1 end
+                    print(string.format("[Mail] Sent %d item -> %s (batch %d/%d)", totalCount, username, i, #chunks))
+                else
+                    warn(string.format("[Mail] Send failed -> %s: %s", username, tostring(err)))
+                    break
+                end
+                if i < #chunks then task.wait(MAIL_SEND_GAP) end
+            end
+            isSendingMail = false
+        end)
+        return
+    end
+end
+
+local function getInbox()
+    local ok, inbox = pcall(function()
+        return Net.Mailbox.OpenInbox:Fire()
+    end)
+    if ok and type(inbox) == "table" then
+        if type(inbox.Mailbox) == "table" then return inbox.Mailbox end
+        return inbox
+    end
+    return nil
+end
+
+local function claimAllMail()
+    if Config["Auto Claim Mail"] == false then return end
+    if isClaiming then return end
+    isClaiming = true
+
+    task.spawn(function()
+        local inbox = getInbox()
+        if type(inbox) == "table" then
+            for id, entry in inbox do
+                if type(id) == "string" or type(id) == "number" then
+                    local ok = pcall(function()
+                        Net.Mailbox.Claim:Fire(id)
+                    end)
+                    if ok then
+                        print("[Mail] Claimed:", tostring(id))
+                    end
+                    task.wait(CLAIM_GAP)
+                end
+            end
+        end
+        isClaiming = false
+    end)
+end
+
+task.spawn(function()
+    while true do
+        if Config["Auto Claim Mail"] ~= false then
+            pcall(claimAllMail)
+        end
+        task.wait(Config["Claim Loop"] or 5)
+    end
+end)
+
+while true do
+    pcall(trySendMail)
+    task.wait(Config["Send Loop"] or 3)
+end
