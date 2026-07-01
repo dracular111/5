@@ -34,6 +34,7 @@ local FPS = 4
 
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
 
 -- UI
 
@@ -61,7 +62,7 @@ workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateS
 
 local Label = Instance.new("TextLabel")
 Label.Size = UDim2.new(0, 1200, 0, 400)
-Label.Position = UDim2.new(0.5, -600, 0, -85)
+Label.Position = UDim2.new(0.5, -600, 0, -95)
 Label.BackgroundTransparency = 1
 Label.TextColor3 = Color3.fromRGB(255,255,0)
 Label.Font = Enum.Font.Code
@@ -76,6 +77,21 @@ Label.Parent = ScreenGui
 local fps = 0
 local fpsCapActive = false
 
+-- Players
+
+local playerCount = #Players:GetPlayers()
+local maxPlayers = Players.MaxPlayers
+
+local function UpdatePlayers()
+    playerCount = #Players:GetPlayers()
+    maxPlayers = Players.MaxPlayers
+end
+
+UpdatePlayers()
+
+Players.PlayerAdded:Connect(UpdatePlayers)
+Players.PlayerRemoving:Connect(UpdatePlayers)
+
 getgenv().fps_loop = RunService.RenderStepped:Connect(function(dt)
     fps = math.floor(1 / math.max(dt, 0.0001))
 end)
@@ -87,9 +103,20 @@ task.spawn(function()
         end
 
         if fpsCapActive then
-            Label.Text = string.format("FPS %d/%d", fps, FPS)
+            Label.Text = string.format(
+                "FPS %d/%d\nPlayers %d/%d",
+                fps,
+                FPS,
+                playerCount,
+                maxPlayers
+            )
         else
-            Label.Text = string.format("FPS %d/...", fps)
+            Label.Text = string.format(
+                "FPS %d/...\nPlayers %d/%d",
+                fps,
+                playerCount,
+                maxPlayers
+            )
         end
     end
 end)
